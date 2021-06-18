@@ -1,0 +1,5 @@
+*.iml
+.idea/
+pixelmator/
+data/
+.DS_Store

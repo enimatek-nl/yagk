@@ -26,8 +26,8 @@ func (p *Pane) Height() int {
 }
 
 func (p *Pane) Update(io *IO) {
-	for _, w := range p.widgets {
-		w.Update(io)
+	for i := len(p.widgets) - 1; i >= 0; i-- {
+		p.widgets[i].Update(io)
 	}
 }
 
@@ -45,7 +45,7 @@ type ListItem struct {
 
 func (p *Pane) List(listItems []ListItem, inView int, action func(index int)) *Pane {
 
-	s := p.style.def.Sizes.Y + (p.style.def.Offset.Y*2) // per item size
+	s := p.style.def.Sizes.Y + (p.style.def.Offset.Y * 2) // per item size
 
 	sw := p.style.def.Sizes.X // scrollbar Width
 	v := inView               // items in view
@@ -221,15 +221,37 @@ func (p *Pane) Text(iconId int, text string) *Pane {
 
 	ctn := newContainer(x, y, w, h+(t.def.Offset.Y*2), 0)
 
-	icn := newIcon(iconId, x+t.def.Offset.X, y+t.def.Offset.Y, p.style.def)
+	//icn := newIcon(iconId, x+t.def.Offset.X, y+t.def.Offset.Y, p.style.def)
+	//lbl := newLabel(text, x+(t.def.Offset.X*2)+icn.rect.Dx(), y+t.def.Offset.Y, w-(t.def.Offset.X*2), h)
+	//lbl.Color = p.style.def.Font.Color
 
-	lbl := newLabel(text, x+(t.def.Offset.X*2)+icn.rect.Dx(), y+t.def.Offset.Y, w-(t.def.Offset.X*2), h)
+	lbl := newLabel(text, x+t.def.Offset.X, y+t.def.Offset.Y, w-(t.def.Offset.X*2), h)
+	lbl.Alignment = AlignCenter
 	lbl.Color = p.style.def.Font.Color
 
-	p.widgets = append(p.widgets, ctn, icn, lbl)
+	p.widgets = append(p.widgets, ctn, lbl)
 
 	p.rect.Max.Y += h
 	p.rect.Max.Y += t.def.Offset.Y * 2
 
+	return p
+}
+
+func (p *Pane) ProgressBar(total int, progress *int) *Pane {
+	x := p.rect.Min.X
+	y := p.rect.Max.Y
+	w := p.rect.Max.X
+	h := p.style.def.Sizes.Y
+	t := p.style
+
+	ctn := newContainer(x, y, w, h+(t.def.Offset.Y*2), 0)
+
+	prg := newProgress(total, x+t.def.Offset.X, y+t.def.Offset.Y, w-(t.def.Offset.X*2), h)
+	prg.progress = progress
+
+	p.widgets = append(p.widgets, ctn, prg)
+
+	p.rect.Max.Y += h
+	p.rect.Max.Y += t.def.Offset.Y * 2
 	return p
 }

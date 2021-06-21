@@ -8,7 +8,6 @@ import (
 Window -> Panes <- ⬇️Widgets
 */
 
-
 type Alignment int
 type Orientation int
 
@@ -20,6 +19,8 @@ const (
 	OrientHorizontal Orientation = 0
 	OrientVertical   Orientation = 1
 )
+
+type WidgetId int
 
 type Widget interface {
 	Update(io *IO)

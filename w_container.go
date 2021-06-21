@@ -3,9 +3,11 @@ package yagk
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"image"
+	"math/rand"
 )
 
 type Container struct {
+	id                    WidgetId
 	styleIndex            int
 	rect                  image.Rectangle
 	focus, hover, pressed bool
@@ -14,6 +16,7 @@ type Container struct {
 
 func newContainer(x, y, width, height, style int) (c *Container) {
 	c = &Container{
+		id:         WidgetId(rand.Int()),
 		styleIndex: style,
 		rect:       image.Rect(x, y, x+width, y+height),
 	}
@@ -29,7 +32,9 @@ func (c *Container) Update(io *IO) {
 
 	if io.mouse.button.left {
 		if c.hover {
-			c.pressed = true
+			if io.activate(c.id) {
+				c.pressed = true
+			}
 		}
 	} else {
 		if c.hover && c.pressed {
@@ -37,6 +42,7 @@ func (c *Container) Update(io *IO) {
 				c.onclick()
 			}
 		}
+		io.deactivate(c.id)
 		c.pressed = false
 	}
 }

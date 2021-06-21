@@ -3,9 +3,11 @@ package yagk
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"image"
+	"math/rand"
 )
 
 type Slider struct {
+	id              WidgetId
 	rect            image.Rectangle
 	orientation     Orientation
 	total, selected int
@@ -17,6 +19,7 @@ type Slider struct {
 func newSlider(total, x, y, w, h int, onchange func(pos int)) (s *Slider) {
 	view := image.Rect(0, 0, w, h)
 	s = &Slider{
+		id:          WidgetId(rand.Int()),
 		rect:        image.Rect(x, y, x+w, y+h),
 		orientation: OrientVertical,
 		inView:      &view,
@@ -46,7 +49,7 @@ func (s *Slider) Update(io *IO) {
 	}
 
 	if io.mouse.button.left {
-		if s.hover && !s.pressed {
+		if s.hover && io.activate(s.id) {
 			s.pressed = true
 		}
 		if s.pressed {
@@ -67,6 +70,7 @@ func (s *Slider) Update(io *IO) {
 			}
 		}
 	} else {
+		io.deactivate(s.id)
 		s.pressed = false
 	}
 }

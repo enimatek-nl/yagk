@@ -6,19 +6,24 @@ import (
 	"log"
 )
 
-type Layout int
-
 type Window struct {
-	Width,Height                 int
-	title                 string
-	panes                 []*Pane
+	Width, Height int
+	title         string
+	panes         []*Pane
+	io            *IO
 }
 
-func New(title string, width,height int) (win *Window) {
+func New(title string, width, height int) (win *Window) {
 	win = &Window{
-		Width: width,
+		Width:  width,
 		Height: height,
-		title: title,
+		title:  title,
+		io: &IO{
+			state: WidgetState{
+				active: -1,
+				focus:  -1,
+			},
+		},
 	}
 
 	return
@@ -119,7 +124,7 @@ func (win *Window) Run() {
 
 func (win *Window) Update() error {
 	mpx, mpy := ebiten.CursorPosition()
-	io := &IO{mouse: Mouse{
+	win.io.mouse = Mouse{
 		pos: Pos{
 			x: mpx,
 			y: mpy,
@@ -128,11 +133,11 @@ func (win *Window) Update() error {
 			left:  ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft),
 			right: ebiten.IsMouseButtonPressed(ebiten.MouseButtonRight),
 		},
-	}}
+	}
 	//for _, p := range win.panes {
 	//	p.Update(io)
 	//}
-	win.peekPane().Update(io)
+	win.peekPane().Update(win.io)
 	return nil
 }
 

@@ -23,7 +23,7 @@ func newProgress(total, x, y, w, h int) (p *Progress) {
 }
 
 func (p *Progress) Update(io *IO) {
-	if *p.progress > p.total {
+	if p.progress != nil && *p.progress > p.total {
 		*p.progress = p.total
 	}
 }
@@ -32,7 +32,7 @@ func (p *Progress) Draw(canvas *ebiten.Image, win *Window) {
 	win.drawStyle(canvas, p.rect, 3, 0)
 	win.drawStyle(canvas, p.rect, 3, 2)
 
-	if *p.progress > 0 {
+	if p.progress != nil && *p.progress > 0 {
 		xs := *p.progress * (p.rect.Dx() / p.total)
 		c := image.Rect(p.rect.Min.X, p.rect.Min.Y, p.rect.Min.X+xs, p.rect.Max.Y)
 		win.drawStyle(canvas, c, 3, 1)

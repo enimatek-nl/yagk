@@ -3,11 +3,9 @@ package yagk
 import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"image"
-	"math/rand"
 )
 
 type Progress struct {
-	id       WidgetId
 	rect     image.Rectangle
 	total    int
 	progress *int
@@ -15,7 +13,6 @@ type Progress struct {
 
 func newProgress(total, x, y, w, h int) (p *Progress) {
 	p = &Progress{
-		id:    WidgetId(rand.Int()),
 		rect:  image.Rect(x, y, x+w, y+h),
 		total: total,
 	}

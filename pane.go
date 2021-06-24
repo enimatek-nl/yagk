@@ -294,3 +294,19 @@ func (p *Pane) Checkbox(label string, checked *bool) *Pane {
 	p.rect.Max.Y += t.def.Offset.Y * 2
 	return p
 }
+
+func (p *Pane) Input(text *string) *Pane {
+	x := p.rect.Min.X
+	y := p.rect.Max.Y
+	w := p.rect.Max.X
+	h := p.style.def.Sizes.Y
+	t := p.style
+
+	ctn := newContainer(x, y, w, h+(t.def.Offset.Y*2), 0)
+	ipt := newInput(text, x+t.def.Offset.X, y+t.def.Offset.Y, w-(t.def.Offset.X*2), h, p.style)
+	p.widgets = append(p.widgets, ctn, ipt)
+
+	p.rect.Max.Y += h
+	p.rect.Max.Y += t.def.Offset.Y * 2
+	return p
+}

@@ -1,6 +1,8 @@
 package yagk
 
-import "image"
+import (
+	"image"
+)
 
 type IO struct {
 	state WidgetState
@@ -49,4 +51,12 @@ func (io *IO) deactivate(c WidgetId) {
 	if io.state.active == c {
 		io.state.active = -1
 	}
+}
+
+func (io *IO) focus(c WidgetId) {
+	io.state.focus = c
+}
+
+func (io *IO) blur() {
+	io.state.focus = -1
 }

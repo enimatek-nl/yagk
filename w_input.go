@@ -75,6 +75,7 @@ func (i *Input) Update(io *IO) {
 		i.focus = true
 	} else {
 		i.focus = false
+		i.resetCursor()
 	}
 
 	if i.focus {
@@ -110,7 +111,7 @@ func (i *Input) Update(io *IO) {
 					}
 				}
 
-				i.text = &t
+				*i.text = t
 
 				if k != "" {
 					i.resetCursor()
@@ -196,9 +197,21 @@ func (i *Input) resetCursor() {
 
 func (i *Input) checkPos(nx int) int {
 	t := *i.text
-	for j := i.sx; j < len(t); j++ {
+	if nx < 0 {
+		return 0
+	}
+	b := text.BoundString(i.style.font, t[i.sx:])
+	if nx > b.Max.X {
+		return len(t)
+	}
+	for j := i.sx; j <= len(t); j++ {
 		b := text.BoundString(i.style.font, t[i.sx:j])
-		if nx <= b.Max.X && nx >= b.Min.X {
+		xtr := 0
+		if j < len(t)-1 {
+			c := text.BoundString(i.style.font, t[j:j+1])
+			xtr = c.Dx() / 2 // add half the next letter to give a better 'feel'
+		}
+		if b.Max.X+xtr > nx && b.Min.X < nx {
 			return j
 		}
 	}

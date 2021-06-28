@@ -16,7 +16,7 @@ import (
 type Input struct {
 	id                 WidgetId
 	rect               image.Rectangle
-	sx, cx, ss         int // start x, cursor x, start selection
+	sx, ex, cx, ss     int // start x, end x, cursor x, start selection
 	text               *string
 	color              color.Color
 	timer              time.Time
@@ -61,6 +61,10 @@ func (i *Input) Update(io *IO) {
 			c := io.mouse.pos.x - i.rect.Min.X - i.style.def.Offset.X
 			if z := i.checkPos(c); z != -1 {
 				i.cx = z
+				// TODO not working to scroll back..
+				//if i.cx == i.sx {
+				//	i.decCur()
+				//}
 			}
 			if !i.drag {
 				i.ss = i.cx
@@ -83,9 +87,7 @@ func (i *Input) Update(io *IO) {
 		for _, key := range pk {
 			if key == ebiten.KeyLeft && !i.checkKey(ebiten.KeyLeft) {
 				i.checkSelection()
-				if i.cx > 0 {
-					i.cx--
-				}
+				i.decCur()
 				i.resetCursor()
 			} else if key == ebiten.KeyRight && !i.checkKey(ebiten.KeyRight) {
 				i.checkSelection()
@@ -106,8 +108,9 @@ func (i *Input) Update(io *IO) {
 					t = fmt.Sprintf("%s%s%s", t[0:i.cx], k, t[i.cx:])
 				} else if key == ebiten.KeyBackspace || key == ebiten.KeyDelete {
 					if i.cx > 0 {
-						i.cx--
-						t = fmt.Sprintf("%s%s", t[0:i.cx], t[i.cx+1:])
+						if i.decCur() {
+							t = fmt.Sprintf("%s%s", t[0:i.cx], t[i.cx+1:])
+						}
 					}
 				}
 
@@ -121,6 +124,8 @@ func (i *Input) Update(io *IO) {
 		}
 		i.last = pk
 	}
+
+	i.calcEX()
 }
 
 func (i *Input) Draw(canvas *ebiten.Image, win *Window) {
@@ -133,15 +138,19 @@ func (i *Input) Draw(canvas *ebiten.Image, win *Window) {
 	t := *i.text
 	t = strings.ReplaceAll(t, " ", "_") // TODO hack... spaces are empty in measurements
 
-	bb := text.BoundString(i.style.font, t[i.sx:i.cx])
-
-	w := bb.Dx()
+	w := 0
+	if i.cx >= i.sx {
+		bb := text.BoundString(i.style.font, t[i.sx:i.cx])
+		w = bb.Dx()
+	}
 
 	y := i.rect.Max.Y - (i.rect.Dy()-win.peekPane().style.fontHeight)/2
 	x := i.rect.Min.X + win.peekPane().style.def.Offset.X
 
 	if i.ss != -1 && i.ss != i.cx {
+
 		begin, end := calcBE(i.ss, i.cx)
+
 		bb := text.BoundString(i.style.font, t[i.sx:begin])
 		eb := text.BoundString(i.style.font, t[begin:end])
 
@@ -150,7 +159,8 @@ func (i *Input) Draw(canvas *ebiten.Image, win *Window) {
 		win.drawStyle(canvas, r, 6, 2) // hover
 	}
 
-	text.Draw(canvas, *i.text, i.style.font, x, y, i.color)
+	t = *i.text
+	text.Draw(canvas, t[i.sx:i.ex], i.style.font, x, y, i.color)
 
 	if i.flicker && i.focus {
 		for t := 0; t < 2; t++ {
@@ -166,6 +176,41 @@ func (i *Input) Translate(x, y int) {
 func (i *Input) incCur() {
 	if i.cx < len(*i.text) {
 		i.cx++
+	}
+}
+
+func (i *Input) decCur() bool {
+	i.cx--
+	if i.cx < 0 {
+		i.cx = 0
+	}
+	if i.sx > 0 && i.sx == i.cx {
+		i.sx--
+		return true
+	}
+	return false
+}
+
+func (i *Input) calcEX() {
+	t := *i.text
+	i.ex = len(t)
+	w := i.rect.Dx() - (i.style.def.Offset.X * 2)
+
+	if i.sx < i.cx {
+		cb := text.BoundString(i.style.font, t[i.sx:i.cx])
+		// cursor further away, scroll start
+		for cb.Dx() > w {
+			i.sx++
+			i.ex = i.cx
+			cb = text.BoundString(i.style.font, t[i.sx:i.cx])
+		}
+	}
+
+	bb := text.BoundString(i.style.font, t[i.sx:i.ex])
+	// end too long, cut end
+	for bb.Dx() > w {
+		i.ex--
+		bb = text.BoundString(i.style.font, t[i.sx:i.ex])
 	}
 }
 
@@ -198,7 +243,7 @@ func (i *Input) resetCursor() {
 func (i *Input) checkPos(nx int) int {
 	t := *i.text
 	if nx < 0 {
-		return 0
+		return i.sx
 	}
 	b := text.BoundString(i.style.font, t[i.sx:])
 	if nx > b.Max.X {

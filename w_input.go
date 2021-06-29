@@ -60,11 +60,11 @@ func (i *Input) Update(io *IO) {
 			io.focus(i.id)
 			c := io.mouse.pos.x - i.rect.Min.X - i.style.def.Offset.X
 			if z := i.checkPos(c); z != -1 {
+				// scroll back when cursor is on start
+				if z == i.sx {
+					i.decCur()
+				}
 				i.cx = z
-				// TODO not working to scroll back..
-				//if i.cx == i.sx {
-				//	i.decCur()
-				//}
 			}
 			if !i.drag {
 				i.ss = i.cx
@@ -107,10 +107,8 @@ func (i *Input) Update(io *IO) {
 				if k != "" {
 					t = fmt.Sprintf("%s%s%s", t[0:i.cx], k, t[i.cx:])
 				} else if key == ebiten.KeyBackspace || key == ebiten.KeyDelete {
-					if i.cx > 0 {
-						if i.decCur() {
-							t = fmt.Sprintf("%s%s", t[0:i.cx], t[i.cx+1:])
-						}
+					if i.decCur() || i.cx > 0 {
+						t = fmt.Sprintf("%s%s", t[0:i.cx], t[i.cx+1:])
 					}
 				}
 
